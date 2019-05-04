@@ -1,4 +1,4 @@
-## Build a Treasure Hunt App
+## Build a TH App
 
 
 ### Set up
