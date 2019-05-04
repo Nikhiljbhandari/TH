@@ -1,0 +1,35 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-title>MPF Carnaama</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content *ngIf="items" class="list-mini-content" padding>
+  <div *ngIf="items.length > 0" class="list-mini">
+    Welcome <br/>
+
+      <ion-list *ngFor="let item of items" >
+        <ion-list *ngFor="let people of item.payload.doc.data().teamMembers" >
+
+            <ion-label>{{people}} </ion-label>
+        </ion-list>
+        <ion-label> <b>Theme Name : &nbsp; &nbsp;</b> {{item.payload.doc.data().themeName}}</ion-label>
+        <ion-label> <b>Team Points : &nbsp; &nbsp; </b> {{item.payload.doc.data().points}}</ion-label>
+        <ion-button  fill="clear" slot="end" (click)="gotoHome(item)">Go To Event</ion-button>
+      </ion-list>
+  </div>
+  <div>
+    Sponsered by <br/>
+      <img src="./assets/imgs/sponser_image.png">
+  </div>
+  <div *ngIf="errorMessage">
+  {{errorMessage}}
+  </div>
+</ion-content>
+
+<ion-footer (click)="logout()">
+    <ion-toolbar color="medium">
+      <ion-title>Log out</ion-title>
+      <img src="./assets/imgs/sponser_image.png">
+    </ion-toolbar>
+</ion-footer>
