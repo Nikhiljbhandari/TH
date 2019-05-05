@@ -4,3 +4,20 @@
 .delete-button {
   // margin-top: 20px;
 }
+
+.printable-area[scrollx=true], div[scrolly=true] {
+  position: relative;
+  overflow: hidden;
+
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.printable-area[scrollx=true] {
+  overflow-x: auto;
+}
+
+.printable-area[scrolly=true] {
+  overflow-y: auto;
+}

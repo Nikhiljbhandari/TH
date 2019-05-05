@@ -29,6 +29,7 @@ export class DetailsPage implements OnInit {
   item: any;
   load: boolean = false;
   loading: any;
+  peopleDetails: any;
   images = [];
 
   constructor(
@@ -64,7 +65,18 @@ export class DetailsPage implements OnInit {
     this.route.data.subscribe(routeData => {
       //this.item = routeData['data'].peopleEvent;
       routeData['data'].subscribe(data => {
-        this.item = data;
+        this.item = data[0].payload.doc.data();
+        this.item.id = data[0].payload.doc.id;
+        //this.item = data;
+        this.firebaseService.getPeopleDetails()
+                  .then(data1 => {
+                    data1.subscribe(data2 => {
+                  this.peopleDetails = data2;
+                  })
+                    },
+                   err => {
+
+        })
       })
     })
   }
@@ -98,7 +110,7 @@ export class DetailsPage implements OnInit {
       //This is where the PDF file will stored , you can change it as you like
       // for more information please visit https://ionicframework.com/docs/native/file/
       const directory = this.file.dataDirectory ;
-      const fileName = "invoice.pdf";
+      const fileName = this.peopleDetails[0].payload.doc.data().name+"_"+Date.now()+".pdf";
       let options: IWriteOptions = { replace: true };
 
       this.file.checkFile(directory, fileName).then((success)=> {
@@ -144,12 +156,12 @@ export class DetailsPage implements OnInit {
       description: value.description,
       image: this.image
     }
-    this.firebaseService.updateTask(this.item.id,data)
+    /*this.firebaseService.updateTask(this.item.id,data)
     .then(
       res => {
         this.router.navigate(["/home"]);
       }
-    )
+    )*/
   }
 
   async finish() {
@@ -166,13 +178,14 @@ export class DetailsPage implements OnInit {
             {
               text: 'Yes',
               handler: () => {
-                /*this.firebaseService.deleteTask(this.item.id)
+                this.item.endAt = Date.now();
+                this.firebaseService.updateEvent(this.item.id, this.item)
                 .then(
-                  res => {*/
-                    this.router.navigate(["/home"]);
-                  /*},
+                  res => {
+                    //this.router.navigate(["/home"]);
+                  },
                   err => console.log(err)
-                )*/
+                )
               }
             }
           ]
@@ -180,11 +193,11 @@ export class DetailsPage implements OnInit {
         await alert.present();
   }
 
-  createFileName() {
+  createFileName(clueName) {
       var d = new Date(),
           n = d.getTime(),
           newFileName = n + ".jpg";
-      return newFileName;
+      return this.peopleDetails[0].payload.doc.data().name+"_"+clueName+"_"+Date.now()+".jpg";
   }
 
   async presentToast(text) {
@@ -196,14 +209,14 @@ export class DetailsPage implements OnInit {
       toast.present();
     }
 
-  copyFileToLocalDir(namePath, currentName, newFileName) {
+  copyFileToLocalDir(namePath, currentName, newFileName, imagePath, clue) {
       console.log(namePath + '  namePath');
             console.log(currentName + '  currentName');
             console.log(newFileName + '  newFileName');
             console.log(this.file + '  this.file');
 
       this.file.copyFile(namePath, currentName, this.file.dataDirectory, newFileName).then(success => {
-          this.updateStoredImages(newFileName);
+          this.updateStoredImages(newFileName, imagePath, clue);
       }, error => {
           this.presentToast('Error while storing file.');
       });
@@ -218,82 +231,81 @@ export class DetailsPage implements OnInit {
     }
   }
 
-  updateStoredImages(name) {
-      this.storage.get(STORAGE_KEY).then(images => {
-          let arr = JSON.parse(images);
-          if (!arr) {
-              let newImages = [name];
-              this.storage.set(STORAGE_KEY, JSON.stringify(newImages));
-          } else {
-              arr.push(name);
-              this.storage.set(STORAGE_KEY, JSON.stringify(arr));
-          }
+  updateStoredImages(name, imagePath, clue) {
+    this.storage.get(STORAGE_KEY).then(images => {
+      let arr = JSON.parse(images);
+      if (!arr) {
+          let newImages = [name];
+          this.storage.set(STORAGE_KEY, JSON.stringify(newImages));
+      } else {
+          arr.push(name);
+          this.storage.set(STORAGE_KEY, JSON.stringify(arr));
+      }
 
-          let filePath = this.file.dataDirectory + name;
-          let resPath = this.pathForImage(filePath);
+      let filePath = this.file.dataDirectory + name;
+      let resPath = this.pathForImage(filePath);
 
-          let newEntry = {
-              name: name,
-              path: resPath,
-              filePath: filePath
-          };
+      let newEntry = {
+          name: name,
+          path: resPath,
+          filePath: filePath
+      };
 
-          this.images = [newEntry, ...this.images];
-          this.ref.detectChanges(); // trigger change detection cycle
-      });
+      this.images = [newEntry, ...this.images];
+      clue.localImageURL = resPath;
+      this.uploadImageToFirebase(imagePath, clue);
+      this.ref.detectChanges(); // trigger change detection cycle
+    });
   }
 
   async selectImage(clue) {
-      const actionSheet = await this.actionSheetController.create({
-          header: "Select Image source",
-          buttons: [{
-                  text: 'Load from Library',
-                  handler: () => {
-                      this.takePicture(this.camera.PictureSourceType.PHOTOLIBRARY, clue);
-                  }
-              },
-              {
-                  text: 'Use Camera',
-                  handler: () => {
-                      this.takePicture(this.camera.PictureSourceType.CAMERA, clue);
-                  }
-              },
-              {
-                  text: 'Cancel',
-                  role: 'cancel'
+    const actionSheet = await this.actionSheetController.create({
+      header: "Select Image source",
+      buttons: [{
+              text: 'Load from Library',
+              handler: () => {
+                  this.takePicture(this.camera.PictureSourceType.PHOTOLIBRARY, clue);
               }
-          ]
-      });
-      await actionSheet.present();
+          },
+          {
+              text: 'Use Camera',
+              handler: () => {
+                  this.takePicture(this.camera.PictureSourceType.CAMERA, clue);
+              }
+          },
+          {
+              text: 'Cancel',
+              role: 'cancel'
+          }
+      ]
+    });
+    await actionSheet.present();
   }
 
   takePicture(sourceType: PictureSourceType, clue: any) {
-      var options: CameraOptions = {
-          quality: 100,
-          sourceType: sourceType,
-          saveToPhotoAlbum: false,
-          correctOrientation: true
-      };
-console.log('takePicture  ' + sourceType);
-      this.camera.getPicture(options).then(imagePath => {
-          if (this.plt.is('android') && sourceType === this.camera.PictureSourceType.PHOTOLIBRARY) {
-              this.filePath.resolveNativePath(imagePath)
-                  .then(filePath => {
-                      let correctPath = filePath.substr(0, filePath.lastIndexOf('/') + 1);
-                      let currentName = imagePath.substring(imagePath.lastIndexOf('/') + 1, imagePath.lastIndexOf('?'));
-                      this.copyFileToLocalDir(correctPath, currentName, this.createFileName());
-                      //              this.uploadImageToFirebase(results[i]);
-
-                  });
-          } else {
-              console.log(imagePath + 'imagePath');
-              var currentName = imagePath.substr(imagePath.lastIndexOf('/') + 1);
-              var correctPath = imagePath.substr(0, imagePath.lastIndexOf('/') + 1);
-              this.copyFileToLocalDir(correctPath, currentName, this.createFileName());
-              //              this.uploadImageToFirebase(results[i]);
-
-          }
-      });
+    var options: CameraOptions = {
+        quality: 100,
+        sourceType: sourceType,
+        saveToPhotoAlbum: true,
+        correctOrientation: true
+    };
+    this.camera.getPicture(options).then(imagePath => {
+      if (this.plt.is('android') && sourceType === this.camera.PictureSourceType.PHOTOLIBRARY) {
+        this.filePath.resolveNativePath(imagePath)
+          .then(filePath => {
+              let correctPath = filePath.substr(0, filePath.lastIndexOf('/') + 1);
+              let currentName = imagePath.substring(imagePath.lastIndexOf('/') + 1, imagePath.lastIndexOf('?'));
+              this.copyFileToLocalDir(correctPath, currentName, this.createFileName(clue.name), imagePath, clue);
+              //this.uploadImageToFirebase(imagePath, clue);
+          });
+      } else {
+        console.log(imagePath + 'imagePath');
+        var currentName = imagePath.substr(imagePath.lastIndexOf('/') + 1);
+        var correctPath = imagePath.substr(0, imagePath.lastIndexOf('/') + 1);
+        this.copyFileToLocalDir(correctPath, currentName, this.createFileName(clue.name), imagePath, clue);
+        //this.uploadImageToFirebase(imagePath, clue);
+      }
+    });
 
   }
 
@@ -310,7 +322,7 @@ console.log('takePicture  ' + sourceType);
         }).then(
           (results) => {
             for (var i = 0; i < results.length; i++) {
-              this.uploadImageToFirebase(results[i]);
+              this.uploadImageToFirebase(results[i], clue);
             }
           }, (err) => console.log(err)
         );
@@ -320,7 +332,7 @@ console.log('takePicture  ' + sourceType);
     });
   }
 
-  async uploadImageToFirebase(image){
+  async uploadImageToFirebase(image, clue){
     const loading = await this.loadingCtrl.create({
       message: 'Please wait...'
     });
@@ -336,11 +348,19 @@ console.log('takePicture  ' + sourceType);
     //uploads img to firebase storage
     this.firebaseService.uploadImage(image_src, randomId)
     .then(photoURL => {
-      this.image = photoURL;
-      loading.dismiss();
+      //this.image = photoURL;
+      clue.firebaseImageURL = photoURL;
+      this.firebaseService.updateEvent(this.item.id, this.item)
+        .then(
+          res => {
+            loading.dismiss();
+          },
+          err => console.log(err)
+        )
       toast.present();
     }, err =>{
       console.log(err);
+      loading.dismiss();
     })
   }
 
@@ -349,12 +369,12 @@ console.log('takePicture  ' + sourceType);
   }
 
   logout(){
-      this.authService.doLogout()
-      .then(res => {
-        this.router.navigate(["/login"]);
-      }, err => {
-        console.log(err);
-      })
-    }
+    this.authService.doLogout()
+    .then(res => {
+      this.router.navigate(["/login"]);
+    }, err => {
+      console.log(err);
+    })
+  }
 
 }

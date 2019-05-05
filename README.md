@@ -1,9 +1,11 @@
-## Build a TH App
+## Build a Treasure Hunt App
 
 
 ### Set up
 run `npm install` to install the project dependencies.
 run `ionic serve` to run the project locally.
+
+You will have to create your Firebase project and add the project configurations to the environment.ts file.
 
 ionic plugin add cordova-plugin-camera --save
 ionic plugin add cordova-plugin-file --save

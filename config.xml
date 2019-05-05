@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="io.ionic.ionic4FirebaseCrud" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <name>Ionic 4 Firebase App</name>
-    <description>An awesome Ionic/Cordova app.</description>
-    <author email="hi@ionicframework" href="https://ionicthemes.com/">IonicThemes Team</author>
+<widget id="io.ionic.snaphunt" version="0.0.1" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>Snap Hunt App</name>
+    <description>An awesome Snap Hunt app.</description>
+    <author email="appcreatorpune@gmail.com">Nikhil Bhandari</author>
     <content src="index.html" />
     <access origin="*" />
     <allow-intent href="http://*/*" />

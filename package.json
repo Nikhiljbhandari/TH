@@ -1,8 +1,8 @@
 {
-    "name": "ionic4-firebase-crud",
+    "name": "SnapHunt",
     "version": "1.0.0",
-    "author": "IonicThemes Team",
-    "homepage": "https://ionicthemes.com/",
+    "author": "Nikhil Bhandari",
+    "homepage": "appcreatorpune@gmail.com",
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
@@ -71,7 +71,7 @@
         "tslint": "~5.11.0",
         "typescript": "~3.1.6"
     },
-    "description": "An Ionic project",
+    "description": "An Ionic project for Snap Hunt",
     "cordova": {
         "plugins": {
             "cordova-plugin-telerik-imagepicker": {

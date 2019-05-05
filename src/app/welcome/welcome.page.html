@@ -1,35 +1,51 @@
 <ion-header>
   <ion-toolbar color="primary">
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">
+        <ion-icon slot="icon-only" name="log-out"></ion-icon>
+      </ion-button>
+    </ion-buttons>
     <ion-title>MPF Carnaama</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content *ngIf="items" class="list-mini-content" padding>
   <div *ngIf="items.length > 0" class="list-mini">
-    Welcome <br/>
+
 
       <ion-list *ngFor="let item of items" >
+        Welcome  {{item.payload.doc.data().name}} <br/>
         <ion-list *ngFor="let people of item.payload.doc.data().teamMembers" >
-
-            <ion-label>{{people}} </ion-label>
+          <ion-label> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</ion-label>
+          <ion-label><b>{{people}}</b> </ion-label>
         </ion-list>
-        <ion-label> <b>Theme Name : &nbsp; &nbsp;</b> {{item.payload.doc.data().themeName}}</ion-label>
-        <ion-label> <b>Team Points : &nbsp; &nbsp; </b> {{item.payload.doc.data().points}}</ion-label>
-        <ion-button  fill="clear" slot="end" (click)="gotoHome(item)">Go To Event</ion-button>
+        <!--<ion-label> <b>Theme Name : &nbsp; &nbsp;</b> {{item.payload.doc.data().themeName}}</ion-label>
+        <ion-label> <b>Team Points : &nbsp; &nbsp; </b> {{item.payload.doc.data().points}}</ion-label>-->
+        <br/>
+        to the first event of MPF Pune South for fiscal year 2019-20 i.e. <b>Snap Hunt Caarnaama</b>.
+        <br/>
+        In this game, teams are given Clues and Activities. They have to identify the destination and take photos along
+        with their other team mates.
+        <br/>
+        We thank our chief Guest who happens to be renowned International Car Driver and <b>Shiv Chatrapathi Award</b>
+        winner <b>Mr. Sanjay Takale</b>
+        <br/>
+        This event is Sponsered by <br/>
+        <img src="./assets/imgs/sponser_image.png">
+        <br/>
+        <ion-button  fill="outline" slot="end" (click)="gotoHome(item)">Go To Event</ion-button>
       </ion-list>
   </div>
-  <div>
-    Sponsered by <br/>
+  <!--<div>
+    This event is Sponsered by <br/>
       <img src="./assets/imgs/sponser_image.png">
-  </div>
+  </div>-->
   <div *ngIf="errorMessage">
   {{errorMessage}}
   </div>
 </ion-content>
 
-<ion-footer (click)="logout()">
-    <ion-toolbar color="medium">
-      <ion-title>Log out</ion-title>
-      <img src="./assets/imgs/sponser_image.png">
-    </ion-toolbar>
+<ion-footer>
+  <img src="./assets/imgs/sp_image.png">
 </ion-footer>

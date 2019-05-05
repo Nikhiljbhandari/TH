@@ -1,47 +1,53 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <!--<ion-buttons slot="end">
-      <ion-button [routerLink]="['/new-task']">
-        <ion-icon slot="icon-only" name="add"></ion-icon>
+    <ion-buttons slot="end">
+      <ion-button (click)="logout()">
+        <ion-icon slot="icon-only" name="log-out"></ion-icon>
       </ion-button>
-    </ion-buttons>-->
-    <ion-title>Events List</ion-title>
+    </ion-buttons>
+    <ion-title>MPF Carnaama <br/> Events List</ion-title>
+
   </ion-toolbar>
 </ion-header>
 
 <ion-content *ngIf="items" class="list-mini-content" padding>
   <div *ngIf="items.length > 0" class="list-mini">
-    <ion-list>
-      <ion-item *ngFor="let item of items" >
-        <ion-thumbnail slot="start">
+    <ion-list *ngFor="let item of items">
+      <ion-item  >
+        <ion-thumbnail item-start>
           <img [src]="item.payload.doc.data().image">
         </ion-thumbnail>
-        <ion-label>{{item.payload.doc.data().name}} </ion-label> started at
-        <ion-label>{{item.payload.doc.data().startTime.toDate() | date : 'medium' }}  </ion-label>
+        <h2><b>{{item.payload.doc.data().name}}</b> </h2>
+        <p> <br>&nbsp; {{item.payload.doc.data().active ? "Started " : "will start " }} at {{item.payload.doc.data().startTime.toDate() | date : 'medium' }}
         and end at
-        <ion-label>{{item.payload.doc.data().endTime.toDate() | date : 'medium'}} </ion-label>
-        <ion-button [disabled]=!item.payload.doc.data().active fill="clear" slot="end" (click)="startOrContinue(item)">{{item.eventActivated  ? "Continue" : "Start"}}</ion-button>
+        {{item.payload.doc.data().endTime.toDate() | date : 'medium'}} </p>
+        <ion-button round [disabled]=!item.payload.doc.data().active fill="outline" slot="end" (click)="startOrContinue(item)">{{item.eventActivated  ? "Continue" : "Start"}}</ion-button>
       </ion-item>
     </ion-list>
   </div>
   <div *ngIf="items.length == 0" class="empty-list">
-    Please create your first task.
+    No Events available yet.
   </div>
+  <br/>
+  <br/>
   <div>
-    Rules And Regulations
+    <b>Rules And Regulations </b>
     <br/>
-    1. please use 1
-    <br/>
-    2. Please use 2 dfsf sdfsdf sdfdsfsd <br/>
-       sdfdsfsdf
+    1. You are allowed to use google maps and also allowed to call your friends and Family.<br/>
+    2. You can only call event organizer only after half hour of start of event. <br/>
+    3. Please drive carefully. Car driver and passenger on front seat should always wear seat belts.<br/>
+    &nbsp; &nbsp; Please do remember your life is much more precious than this event. <br/>
+    4. Driver should have driving License, PUC certificate and Insurance. Teams will be only be allowed <br/>
+    &nbsp; &nbsp; to participate if they have all these documents <br/>
+    5. No Honking please. Points will be Deducted if found violating traffic rules and honking. <br/>
+    6. Teams will be judged by our chief guests. <br/>
+    7. Please remember this is a game designed for your entertainment and so maintain professionalism and team spirit.<br/>
 
   </div>
   <div *ngIf="errorMessage">
   {{errorMessage}}
   </div>
 </ion-content>
-<ion-footer (click)="logout()">
-  <ion-toolbar color="medium">
-    <ion-title>Log out</ion-title>
-  </ion-toolbar>
+<ion-footer>
+<img src="./assets/imgs/sp_image.png">
 </ion-footer>

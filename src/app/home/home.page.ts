@@ -42,18 +42,22 @@ export class HomePage implements OnInit {
         this.items = data;
         this.firebaseService.getPeopleEvent()
           .then(data => {
-          this.peopleEvent = data;
-          if (this.peopleEvent) {
-            this.items.forEach(item => {
-              item.themeId = themeId;
-              this.peopleEvent.forEach ( event => {
-                if (event[0] && event[0].eventId === item.payload.doc.id) {
-                  item.eventActivated = true;
-                  item.startedAt = event[0].startedAt;
-                }
-              })
-            })
-          }
+          data.subscribe( data1 =>{
+            this.peopleEvent = data1;
+              if (this.peopleEvent) {
+                this.items.forEach(item => {
+                  item.themeId = themeId;
+                  this.peopleEvent.forEach ( event => {
+                    if (event && event.payload.doc.data().eventId === item.payload.doc.id) {
+                      item.eventActivated = true;
+                      item.startedAt = event.payload.doc.data().startedAt;
+                    }
+                  })
+                })
+              }
+          });
+          //this.peopleEvent = data;
+
         }, err => {
 
         })

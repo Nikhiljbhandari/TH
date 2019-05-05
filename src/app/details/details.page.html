@@ -5,14 +5,14 @@
     </ion-buttons>
     <ion-buttons slot="end">
       <ion-button >
-        <!--<ion-icon slot="icon-only" name="add"></ion-icon>-->
-        <ion-button fill="outline" slot="end" (click)="exportPdf()">Export</ion-button>
-
-        <ion-button fill="outline" slot="end" (click)="finish()">Finish</ion-button>
-
+        <ion-button *ngIf="item.endAt" fill="outline" slot="end" (click)="exportPdf()">Export</ion-button>
+        <ion-button *ngIf="!item.endAt" fill="outline" slot="end" (click)="finish()">Finish</ion-button>
+        <ion-button (click)="logout()" slot="end">
+          <ion-icon slot="icon-only" name="log-out"></ion-icon>
+        </ion-button>
       </ion-button>
     </ion-buttons>
-    <ion-title>MPF Carnaama <br/> {{item[0].eventName}} &nbsp; Started at {{item[0].startedAt | date:'medium' }}
+    <ion-title>MPF Carnaama <br/> {{item.eventName}} &nbsp; Started at {{item.startedAt | date:'medium' }}
     </ion-title>
 
   </ion-toolbar>
@@ -20,22 +20,25 @@
 
 <ion-content padding *ngIf="item" >
   <div class="printable-area" id ="printable-area">
-  <ion-card *ngFor="let clue of item[0].clues" color="light">
+  <ion-card *ngFor="let clue of item.clues" color="light">
     <ion-item>
       <ion-icon name="car" slot="start"></ion-icon>
       <ion-label>{{clue.name}}</ion-label>
-      <ion-button fill="outline" slot="end" [disabled]="clue.imageUploaded" (click)="selectImage(clue)">Upload Image</ion-button>
+      <ion-button fill="outline" slot="end" [disabled]="item.endAt || clue.firebaseImageURL" (click)="selectImage(clue)">Upload Image</ion-button>
     </ion-item>
 
     <ion-card-content>
+      <div>
       {{clue.description}}
+      </div>
+      <div *ngIf="clue.localImageURL">
+        <img [src] = "clue.localImageURL">
+      </div>
     </ion-card-content>
   </ion-card>
   </div>
 </ion-content>
 
-<ion-footer (click)="logout()">
-  <ion-toolbar color="medium">
-    <ion-title>Log out</ion-title>
-  </ion-toolbar>
+<ion-footer>
+  <img src="./assets/imgs/sp_image.png">
 </ion-footer>
