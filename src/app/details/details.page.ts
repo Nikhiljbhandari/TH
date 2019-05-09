@@ -14,6 +14,8 @@ import { File, IWriteOptions, FileEntry } from '@ionic-native/file/ngx';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
 import { Storage } from '@ionic/storage';
 import { FilePath } from '@ionic-native/file-path/ngx';
+import { Pipe, PipeTransform } from '@angular/core';
+import { DatePipe } from '@angular/common';
 
 const STORAGE_KEY = 'my_images';
 
@@ -21,9 +23,9 @@ const STORAGE_KEY = 'my_images';
   selector: 'app-details',
   templateUrl: './details.page.html',
   styleUrls: ['./details.page.scss'],
+  providers: [DatePipe]
 })
 export class DetailsPage implements OnInit {
-
 
   image: any;
   item: any;
@@ -43,12 +45,13 @@ export class DetailsPage implements OnInit {
     private router: Router,
     private authService: AuthService,
     private file: File,
-      private fileOpener: FileOpener,
-      private camera: Camera,
+    private fileOpener: FileOpener,
+    private camera: Camera,
     private actionSheetController: ActionSheetController,
-                                         private storage: Storage,
-                                          private plt: Platform,
-                                         private ref: ChangeDetectorRef, private filePath: FilePath
+    private storage: Storage,
+    private plt: Platform,
+    private ref: ChangeDetectorRef,
+    private filePath: FilePath,private datePipe: DatePipe
 
   ) { }
 
@@ -69,12 +72,12 @@ export class DetailsPage implements OnInit {
         this.item.id = data[0].payload.doc.id;
         //this.item = data;
         this.firebaseService.getPeopleDetails()
-                  .then(data1 => {
-                    data1.subscribe(data2 => {
-                  this.peopleDetails = data2;
-                  })
-                    },
-                   err => {
+          .then(data1 => {
+            data1.subscribe(data2 => {
+          this.peopleDetails = data2;
+          })
+            },
+           err => {
 
         })
       })
@@ -88,7 +91,114 @@ export class DetailsPage implements OnInit {
     return await loading.present();
   }*/
 
+  getBase64Image(img) {
+    var canvas = document.createElement("canvas");
+    console.log("image");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    var ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    var dataURL = canvas.toDataURL("image/jpeg");
+    return dataURL;
+  }
+
   exportPdf() {
+    var doc =  new jsPDF("p","mm","a4");
+    var i=0;
+    var width = doc.internal.pageSize.width;
+    var height = doc.internal.pageSize.height;
+    doc.setTextColor(255, 0, 0);
+    doc.setFontType('bolditalic');
+    doc.setFontSize(24);
+    doc.text(20, 20, 'Congratulations '+this.peopleDetails[0].payload.doc.data().name+' On Completing Event')
+    doc.text(70, 30, this.item.eventName);
+    doc.setFontType('normal');
+    doc.setTextColor(0, 0, 255);
+    doc.setFontSize(16);
+    doc.text(20, 40, 'Event Started at '+ this.datePipe.transform(this.item.startedAt,'EEEE, MMMM d, y HH:mm:ss.SSS'));
+    doc.text(20, 50, 'Event Ended at '+ this.datePipe.transform(this.item.endAt,'EEEE, MMMM d, y HH:mm:ss.SSS'));
+    doc.text(20, 60, 'Total Time taken to complete this event ' + (this.item.endAt-this.item.startedAt)/1000 + ' seconds');
+
+    doc.text(20, 70, 'MPF PUNE SOUTH THANKS');
+    this.peopleDetails[0].payload.doc.data().teamMembers.forEach( people => {
+      doc.text(50, i+80, people);
+      i=i+10;
+    });
+    //doc.text(20, i, 'Please Send this file ');
+    i=0;
+    this.item.clues.forEach( clue => {
+      var y = 20;
+      doc.addPage();
+      y=y+10;
+      doc.text(20,y, clue.name);
+      y=y+10;
+      var lines = doc.splitTextToSize(clue.description, width-20);
+      doc.text(20,y, lines);
+      y=y+(10*lines.length);
+
+      var img = document.getElementById('img'+i);
+      if (img) {
+        let imageData= this.getBase64Image(img);
+        doc.addImage(imageData, "jpg", 10, y, (height-y)*(9/16), (height-y));
+      }
+      i++;
+    });
+    /*const fileName = this.peopleDetails[0].payload.doc.data().name+"_"+Date.now()+".pdf";
+
+    doc.save(fileName);
+    this.fileOpener.open(fileName, 'application/pdf')
+            .then(() => console.log('File is opened'))
+            .catch(e => console.log('Error opening file', e));*/
+
+    let pdfOutput = doc.output();
+          // using ArrayBuffer will allow you to put image inside PDF
+          let buffer = new ArrayBuffer(pdfOutput.length);
+          let array = new Uint8Array(buffer);
+          for (var i = 0; i < pdfOutput.length; i++) {
+              array[i] = pdfOutput.charCodeAt(i);
+          }
+
+
+          //This is where the PDF file will stored , you can change it as you like
+          // for more information please visit https://ionicframework.com/docs/native/file/
+          const directory = this.file.dataDirectory ;
+          const fileName = this.peopleDetails[0].payload.doc.data().name+"_"+Date.now()+".pdf";
+          let options: IWriteOptions = { replace: true };
+
+          this.file.checkFile(directory, fileName).then((success)=> {
+            //Writing File to Device
+            this.file.writeFile(directory,fileName,buffer, options)
+            .then((success)=> {
+              this.loading.dismiss();
+              console.log("File created Succesfully" + JSON.stringify(success));
+              this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
+                .then(() => console.log('File is opened'))
+                .catch(e => console.log('Error opening file', e));
+            })
+            .catch((error)=> {
+              //this.loading.dismiss();
+              console.log("Cannot Create File " +JSON.stringify(error));
+            });
+          })
+          .catch((error)=> {
+            //Writing File to Device
+            this.file.writeFile(directory,fileName,buffer)
+            .then((success)=> {
+            //  this.loading.dismiss();
+              console.log("File created Succesfully" + JSON.stringify(success));
+              this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
+                .then(() => console.log('File is opened'))
+                .catch(e => console.log('Error opening file', e));
+            })
+            .catch((error)=> {
+          //    this.loading.dismiss();
+              console.log("Cannot Create File " +JSON.stringify(error));
+            });
+          });
+
+  }
+
+  /*exportPdf() {
     //this.presentLoading('Creating PDF file...');
     const div = document.getElementById("printable-area");
     const options = { background: "white", height: div.clientWidth, width: div.clientHeight };
@@ -148,21 +258,7 @@ export class DetailsPage implements OnInit {
       //this.loading.dismiss();
       console.error('oops, something went wrong!', error);
     });
-  }
-
-  onSubmit(value){
-    let data = {
-      title: value.title,
-      description: value.description,
-      image: this.image
-    }
-    /*this.firebaseService.updateTask(this.item.id,data)
-    .then(
-      res => {
-        this.router.navigate(["/home"]);
-      }
-    )*/
-  }
+  }*/
 
   async finish() {
     const alert = await this.alertCtrl.create({
@@ -253,8 +349,16 @@ export class DetailsPage implements OnInit {
 
       this.images = [newEntry, ...this.images];
       clue.localImageURL = resPath;
-      this.uploadImageToFirebase(imagePath, clue);
-      this.ref.detectChanges(); // trigger change detection cycle
+      //this.uploadImageToFirebase(imagePath, clue);
+      this.firebaseService.updateEvent(this.item.id, this.item)
+              .then(
+                res => {
+                  //loading.dismiss();
+                  this.ref.detectChanges();
+                },
+                err => console.log(err)
+              )
+      //this.ref.detectChanges(); // trigger change detection cycle
     });
   }
 
@@ -309,7 +413,7 @@ export class DetailsPage implements OnInit {
 
   }
 
-  openImagePicker(clue){
+  /*openImagePicker(clue){
     this.imagePicker.hasReadPermission()
     .then((result) => {
       if(result == false){
@@ -330,7 +434,7 @@ export class DetailsPage implements OnInit {
     }, (err) => {
       console.log(err);
     });
-  }
+  }*/
 
   async uploadImageToFirebase(image, clue){
     const loading = await this.loadingCtrl.create({
@@ -343,7 +447,7 @@ export class DetailsPage implements OnInit {
     this.presentLoading(loading);
     // let image_to_convert = 'http://localhost:8080/_file_' + image;
     let image_src = this.webview.convertFileSrc(image);
-    let randomId = Math.random().toString(36).substr(2, 5);
+    let randomId = this.createFileName(clue.name);//Math.random().toString(36).substr(2, 5);
 
     //uploads img to firebase storage
     this.firebaseService.uploadImage(image_src, randomId)
