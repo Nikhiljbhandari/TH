@@ -94,8 +94,8 @@ export class DetailsPage implements OnInit {
   getBase64Image(img) {
     var canvas = document.createElement("canvas");
     console.log("image");
-    canvas.width = img.width;
-    canvas.height = img.height;
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
     var ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0);
     var dataURL = canvas.toDataURL("image/jpeg");
@@ -139,62 +139,56 @@ export class DetailsPage implements OnInit {
       var img = document.getElementById('img'+i);
       if (img) {
         let imageData= this.getBase64Image(img);
-        doc.addImage(imageData, "jpg", 10, y, (height-y)*(9/16), (height-y));
+        doc.addImage(imageData, "jpg", 20, y, width-30, height-(y+10));
       }
       i++;
     });
-    /*const fileName = this.peopleDetails[0].payload.doc.data().name+"_"+Date.now()+".pdf";
-
-    doc.save(fileName);
-    this.fileOpener.open(fileName, 'application/pdf')
-            .then(() => console.log('File is opened'))
-            .catch(e => console.log('Error opening file', e));*/
 
     let pdfOutput = doc.output();
-          // using ArrayBuffer will allow you to put image inside PDF
-          let buffer = new ArrayBuffer(pdfOutput.length);
-          let array = new Uint8Array(buffer);
-          for (var i = 0; i < pdfOutput.length; i++) {
-              array[i] = pdfOutput.charCodeAt(i);
-          }
+      // using ArrayBuffer will allow you to put image inside PDF
+      let buffer = new ArrayBuffer(pdfOutput.length);
+      let array = new Uint8Array(buffer);
+      for (var i = 0; i < pdfOutput.length; i++) {
+          array[i] = pdfOutput.charCodeAt(i);
+      }
 
 
-          //This is where the PDF file will stored , you can change it as you like
-          // for more information please visit https://ionicframework.com/docs/native/file/
-          const directory = this.file.dataDirectory ;
-          const fileName = this.peopleDetails[0].payload.doc.data().name+"_"+Date.now()+".pdf";
-          let options: IWriteOptions = { replace: true };
+      //This is where the PDF file will stored , you can change it as you like
+      // for more information please visit https://ionicframework.com/docs/native/file/
+      const directory = this.file.dataDirectory ;
+      const fileName = this.peopleDetails[0].payload.doc.data().name+"_"+Date.now()+".pdf";
+      let options: IWriteOptions = { replace: true };
 
-          this.file.checkFile(directory, fileName).then((success)=> {
-            //Writing File to Device
-            this.file.writeFile(directory,fileName,buffer, options)
-            .then((success)=> {
-              this.loading.dismiss();
-              console.log("File created Succesfully" + JSON.stringify(success));
-              this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
-                .then(() => console.log('File is opened'))
-                .catch(e => console.log('Error opening file', e));
-            })
-            .catch((error)=> {
-              //this.loading.dismiss();
-              console.log("Cannot Create File " +JSON.stringify(error));
-            });
-          })
-          .catch((error)=> {
-            //Writing File to Device
-            this.file.writeFile(directory,fileName,buffer)
-            .then((success)=> {
-            //  this.loading.dismiss();
-              console.log("File created Succesfully" + JSON.stringify(success));
-              this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
-                .then(() => console.log('File is opened'))
-                .catch(e => console.log('Error opening file', e));
-            })
-            .catch((error)=> {
-          //    this.loading.dismiss();
-              console.log("Cannot Create File " +JSON.stringify(error));
-            });
-          });
+      this.file.checkFile(directory, fileName).then((success)=> {
+        //Writing File to Device
+        this.file.writeFile(directory,fileName,buffer, options)
+        .then((success)=> {
+          this.loading.dismiss();
+          console.log("File created Succesfully" + JSON.stringify(success));
+          this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
+            .then(() => console.log('File is opened'))
+            .catch(e => console.log('Error opening file', e));
+        })
+        .catch((error)=> {
+          //this.loading.dismiss();
+          console.log("Cannot Create File " +JSON.stringify(error));
+        });
+      })
+      .catch((error)=> {
+        //Writing File to Device
+        this.file.writeFile(directory,fileName,buffer)
+        .then((success)=> {
+        //  this.loading.dismiss();
+          console.log("File created Succesfully" + JSON.stringify(success));
+          this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
+            .then(() => console.log('File is opened'))
+            .catch(e => console.log('Error opening file', e));
+        })
+        .catch((error)=> {
+      //    this.loading.dismiss();
+          console.log("Cannot Create File " +JSON.stringify(error));
+        });
+      });
 
   }
 
