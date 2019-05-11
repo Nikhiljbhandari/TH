@@ -9,7 +9,6 @@ import { WebView } from '@ionic-native/ionic-webview/ngx';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import * as jsPDF from 'jspdf';
-import domtoimage from 'dom-to-image';
 import { File, IWriteOptions, FileEntry } from '@ionic-native/file/ngx';
 import { FileOpener } from '@ionic-native/file-opener/ngx';
 import { Storage } from '@ionic/storage';
@@ -33,6 +32,11 @@ export class DetailsPage implements OnInit {
   loading: any;
   peopleDetails: any;
   images = [];
+  sliderConfig = {
+    slidesPerView: 1.2,
+    spaceBetween: 2,
+    centeredSlides: true
+  };
 
   constructor(
     private imagePicker: ImagePicker,
@@ -51,7 +55,8 @@ export class DetailsPage implements OnInit {
     private storage: Storage,
     private plt: Platform,
     private ref: ChangeDetectorRef,
-    private filePath: FilePath,private datePipe: DatePipe
+    private filePath: FilePath,
+    private datePipe: DatePipe
 
   ) { }
 
@@ -66,11 +71,9 @@ export class DetailsPage implements OnInit {
 
   async getData(){
     this.route.data.subscribe(routeData => {
-      //this.item = routeData['data'].peopleEvent;
       routeData['data'].subscribe(data => {
         this.item = data[0].payload.doc.data();
         this.item.id = data[0].payload.doc.id;
-        //this.item = data;
         this.firebaseService.getPeopleDetails()
           .then(data1 => {
             data1.subscribe(data2 => {
@@ -192,95 +195,33 @@ export class DetailsPage implements OnInit {
 
   }
 
-  /*exportPdf() {
-    //this.presentLoading('Creating PDF file...');
-    const div = document.getElementById("printable-area");
-    const options = { background: "white", height: div.clientWidth, width: div.clientHeight };
-    domtoimage.toPng(div, options).then((dataUrl)=> {
-      //Initialize JSPDF
-      var doc = new jsPDF("p","mm","a4");
-      //Add image Url to PDF
-      doc.addImage(dataUrl, 'PNG', 20, 20, 240, 180);
-
-      let pdfOutput = doc.output();
-      // using ArrayBuffer will allow you to put image inside PDF
-      let buffer = new ArrayBuffer(pdfOutput.length);
-      let array = new Uint8Array(buffer);
-      for (var i = 0; i < pdfOutput.length; i++) {
-          array[i] = pdfOutput.charCodeAt(i);
-      }
-
-
-      //This is where the PDF file will stored , you can change it as you like
-      // for more information please visit https://ionicframework.com/docs/native/file/
-      const directory = this.file.dataDirectory ;
-      const fileName = this.peopleDetails[0].payload.doc.data().name+"_"+Date.now()+".pdf";
-      let options: IWriteOptions = { replace: true };
-
-      this.file.checkFile(directory, fileName).then((success)=> {
-        //Writing File to Device
-        this.file.writeFile(directory,fileName,buffer, options)
-        .then((success)=> {
-          this.loading.dismiss();
-          console.log("File created Succesfully" + JSON.stringify(success));
-          this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
-            .then(() => console.log('File is opened'))
-            .catch(e => console.log('Error opening file', e));
-        })
-        .catch((error)=> {
-          //this.loading.dismiss();
-          console.log("Cannot Create File " +JSON.stringify(error));
-        });
-      })
-      .catch((error)=> {
-        //Writing File to Device
-        this.file.writeFile(directory,fileName,buffer)
-        .then((success)=> {
-        //  this.loading.dismiss();
-          console.log("File created Succesfully" + JSON.stringify(success));
-          this.fileOpener.open(this.file.dataDirectory + fileName, 'application/pdf')
-            .then(() => console.log('File is opened'))
-            .catch(e => console.log('Error opening file', e));
-        })
-        .catch((error)=> {
-      //    this.loading.dismiss();
-          console.log("Cannot Create File " +JSON.stringify(error));
-        });
-      });
-    })
-    .catch(function (error) {
-      //this.loading.dismiss();
-      console.error('oops, something went wrong!', error);
-    });
-  }*/
-
   async finish() {
     const alert = await this.alertCtrl.create({
-          header: 'Confirm',
-          message: 'Do you want to finish ' + this.item.eventName + '?',
-          buttons: [
-            {
-              text: 'No',
-              role: 'cancel',
-              cssClass: 'secondary',
-              handler: () => {}
-            },
-            {
-              text: 'Yes',
-              handler: () => {
-                this.item.endAt = Date.now();
-                this.firebaseService.updateEvent(this.item.id, this.item)
-                .then(
-                  res => {
-                    //this.router.navigate(["/home"]);
-                  },
-                  err => console.log(err)
-                )
-              }
-            }
-          ]
-        });
-        await alert.present();
+      header: 'Confirm',
+      message: 'Do you want to finish ' + this.item.eventName + '?',
+      buttons: [
+        {
+          text: 'No',
+          role: 'cancel',
+          cssClass: 'secondary',
+          handler: () => {}
+        },
+        {
+          text: 'Yes',
+          handler: () => {
+            this.item.endAt = Date.now();
+            this.firebaseService.updateEvent(this.item.id, this.item)
+            .then(
+              res => {
+                //this.router.navigate(["/home"]);
+              },
+              err => console.log(err)
+            )
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 
   createFileName(clueName) {
@@ -291,25 +232,20 @@ export class DetailsPage implements OnInit {
   }
 
   async presentToast(text) {
-      const toast = await this.toastCtrl.create({
-          message: text,
-          position: 'bottom',
-          duration: 3000
-      });
-      toast.present();
-    }
+    const toast = await this.toastCtrl.create({
+      message: text,
+      position: 'bottom',
+      duration: 3000
+    });
+    toast.present();
+  }
 
   copyFileToLocalDir(namePath, currentName, newFileName, imagePath, clue) {
-      console.log(namePath + '  namePath');
-            console.log(currentName + '  currentName');
-            console.log(newFileName + '  newFileName');
-            console.log(this.file + '  this.file');
-
-      this.file.copyFile(namePath, currentName, this.file.dataDirectory, newFileName).then(success => {
-          this.updateStoredImages(newFileName, imagePath, clue);
-      }, error => {
-          this.presentToast('Error while storing file.');
-      });
+    this.file.copyFile(namePath, currentName, this.file.dataDirectory, newFileName).then(success => {
+      this.updateStoredImages(newFileName, imagePath, clue);
+    }, error => {
+      this.presentToast('Error while storing file.');
+    });
   }
 
   pathForImage(img) {

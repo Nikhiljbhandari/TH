@@ -6,7 +6,15 @@
   color: var(--ion-color-medium);
 }
 
-.list-mini-content {
-background-color: yellow;
-background : yellow;
+.list, .list-mini, .list-mini-content {
+  border-radius: 25px;
+  border: 1px solid #73AD21;
+  padding: 7px 0px 0px 5px;
+}
+
+.rules{
+  border-radius: 25px;
+  border: 1px solid ;
+  padding: 10px;
+  box-shadow: 5px 10px 18px #888888;
 }
