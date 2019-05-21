@@ -3,6 +3,10 @@ import { AuthService } from '../services/auth.service';
 import { LoadingController } from '@ionic/angular';
 import { Router, ActivatedRoute } from '@angular/router';
 import { FirebaseService } from '../services/firebase.service';
+//import { TNCModalPage } from '../tnc/tnc-modal.page';
+import { ExampleModalPage } from '../example-modal/example-modal.page'
+
+import { ModalController } from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -20,7 +24,9 @@ export class HomePage implements OnInit {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private firebaseService: FirebaseService
+    private firebaseService: FirebaseService,
+        public modalController: ModalController
+
 
   ) { }
 
@@ -51,6 +57,8 @@ export class HomePage implements OnInit {
                     if (event && event.payload.doc.data().eventId === item.payload.doc.id) {
                       item.eventActivated = true;
                       item.startedAt = event.payload.doc.data().startedAt;
+                      item.maxSpeed = event.payload.doc.data().maxSpeed;
+                      contactDetails: item.payload.doc.data().contactDetails
                     }
                   })
                 })
@@ -81,15 +89,15 @@ export class HomePage implements OnInit {
           eventStartTime: item.payload.doc.data().startTime,
           eventEndTime: item.payload.doc.data().endTime,
           themeId: item.themeId,
-          clues: item.clues
+          clues: item.clues,
+          maxSpeed: item.payload.doc.data().maxSpeed,
+          contactDetails: item.payload.doc.data().contactDetails
         }
     //const loading = await this.loadingCtrl.create({
       //  message: 'Please wait...'
       //});
     //this.presentLoading(loading);
     if (!item.eventActivated) {
-
-
         this.firebaseService.getEventFromEvents(data.eventId, data.themeId)
           .then(res => {
           res.subscribe(response => {
@@ -99,7 +107,8 @@ export class HomePage implements OnInit {
           this.firebaseService.addPeopleEvent(data)
             .then(
               res => {
-                this.router.navigate(['/details']);
+              this.openModal();
+               // this.router.navigate(['/details']);
               },err => {
                 this.errorMessage = err.message;
                 console.log(err)
@@ -107,10 +116,31 @@ export class HomePage implements OnInit {
         })
       })
     } else {
-      this.router.navigate(['/details']);
+      this.openModal();
+      //this.router.navigate(['/details']);
     }
    // loading.dismiss();
   }
+
+  async openModal() {
+      const modal = await this.modalController.create({
+        component: ExampleModalPage,
+        componentProps: {
+          "paramID": 123,
+          "paramTitle": "Test Title"
+        }
+      });
+
+      modal.onDidDismiss().then((dataReturned) => {
+        if (dataReturned !== null) {
+          //this.dataReturned = dataReturned.data;
+          //alert('Modal Sent Data :'+ dataReturned);
+          this.router.navigate(['/details']);
+        }
+      });
+
+      return await modal.present();
+    }
 
   logout(){
     this.authService.doLogout()

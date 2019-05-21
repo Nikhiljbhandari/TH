@@ -27,6 +27,15 @@ import { Camera } from '@ionic-native/Camera/ngx';
 //import { WebView } from '@ionic-native/ionic-webview/ngx';
 import { FilePath } from '@ionic-native/file-path/ngx';
 import { IonicStorageModule } from '@ionic/storage';
+import { BackgroundGeolocation } from "@ionic-native/background-geolocation/ngx";
+import { Geolocation } from '@ionic-native/geolocation/ngx';
+import { AndroidPermissions } from '@ionic-native/android-permissions/ngx';
+import { LocationAccuracy } from '@ionic-native/location-accuracy/ngx';
+import { SMS } from '@ionic-native/sms/ngx';
+//import { TNCModalModule } from 'tnc/tnc-modal.module';
+import { ExampleModalPageModule } from './example-modal/example-modal.module';
+
+
 
 @NgModule({
   declarations: [AppComponent],
@@ -37,22 +46,29 @@ import { IonicStorageModule } from '@ionic/storage';
     IonicModule.forRoot(),
     IonicStorageModule.forRoot(),
     AppRoutingModule,
+    ExampleModalPageModule,
     FormsModule,
     ReactiveFormsModule,
     AngularFireModule.initializeApp(environment.firebase), // imports firebase/app
     AngularFirestoreModule, // imports firebase/firestore
     AngularFireAuthModule, // imports firebase/auth
     AngularFireStorageModule, // imports firebase/storage
+    //TNCModalModule,
   ],
   providers: [
     StatusBar,
     SplashScreen,
     ImagePicker,
     WebView,
+    AndroidPermissions,
     File,
     FileOpener,
     Camera,
     FilePath,
+    BackgroundGeolocation,
+    LocationAccuracy,
+    Geolocation,
+    SMS,
     { provide: FirestoreSettingsToken, useValue: {} },
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
   ],

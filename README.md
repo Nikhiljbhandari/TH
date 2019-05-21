@@ -48,6 +48,9 @@ ionic cordova run android
 ionic cordova run android --verbose
 
 
+ionic cordova plugin add @mauron85/cordova-plugin-background-geolocation
+npm install @ionic-native/background-geolocation --save
+
 ionic cordova build android --prod --release
 jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.keystore platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk my-alias
 jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.jks platforms/android/app/build/outputs/apk/release/app-release-unsigned.apk my-alias
@@ -58,3 +61,4 @@ cd outputs/release
 cd outputs/apk/release
 C:\Users\nibh0117.NETCRACKER\AppData\Local\Android\Sdk\build-tools\28.0.3\zipalign -v 4 app-release-unsigned.apk SnapHunt-Release-2.0.0.apk
 C:\Users\nibh0117.NETCRACKER\AppData\Local\Android\Sdk\build-tools\28.0.3\apksigner verify SnapHunt-Release-2.0.0.apk
+

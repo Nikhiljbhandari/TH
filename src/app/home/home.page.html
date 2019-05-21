@@ -12,6 +12,8 @@
 
 <ion-content *ngIf="items"  padding>
   <div *ngIf="items.length > 0" >
+    <fieldset>
+      <legend><b>Events To Participate</b></legend>
     <ion-grid *ngFor="let item of items" text-wrap >
       <div class="list-mini-content">
       <ion-row>
@@ -36,13 +38,22 @@
       <ion-row><ion-col></ion-col></ion-row>
       <ion-row></ion-row>
     </ion-grid>
+    </fieldset>
   </div>
   <div *ngIf="items.length == 0" class="empty-list">
     No Events available yet.
   </div>
   <br/>
   <br/>
-  <div class="rules">
+  <fieldset>
+    <legend>
+      Events Hosted By you
+    </legend>
+     You dont have any Event hosted. Start a new Event
+  </fieldset>
+  <br/>
+  <br/>
+  <!--<div class="rules">
     <b>Rules And Regulations </b>
     <br/>
     1. You are allowed to use google maps and also allowed to call your friends and Family.<br/>
@@ -55,7 +66,7 @@
     6. Teams will be judged by our chief guests. <br/>
     7. Please remember this is a game designed for your entertainment and so maintain professionalism and team spirit.<br/>
 
-  </div>
+  </div>-->
   <div *ngIf="errorMessage">
   {{errorMessage}}
   </div>

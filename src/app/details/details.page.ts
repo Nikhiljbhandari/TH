@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Camera, CameraOptions, PictureSourceType } from '@ionic-native/Camera/ngx';
 
 import { FirebaseService } from '../services/firebase.service';
@@ -15,6 +15,15 @@ import { Storage } from '@ionic/storage';
 import { FilePath } from '@ionic-native/file-path/ngx';
 import { Pipe, PipeTransform } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { BackgroundGeolocation,
+                                 BackgroundGeolocationConfig,
+                                 BackgroundGeolocationResponse,
+                                 BackgroundGeolocationEvents } from "@ionic-native/background-geolocation/ngx";
+import { NgZone } from '@angular/core';
+import { Geolocation, Geoposition } from '@ionic-native/geolocation/ngx';
+import { AndroidPermissions } from '@ionic-native/android-permissions/ngx';
+import { LocationAccuracy } from '@ionic-native/location-accuracy/ngx';
+import { SMS } from '@ionic-native/sms/ngx';
 
 const STORAGE_KEY = 'my_images';
 
@@ -24,7 +33,7 @@ const STORAGE_KEY = 'my_images';
   styleUrls: ['./details.page.scss'],
   providers: [DatePipe]
 })
-export class DetailsPage implements OnInit {
+export class DetailsPage implements OnInit, OnDestroy {
 
   image: any;
   item: any;
@@ -37,6 +46,13 @@ export class DetailsPage implements OnInit {
     spaceBetween: 2,
     centeredSlides: true
   };
+   lat : any;
+   lng : any;
+   speed: any;
+   watch: any;
+    x:any;
+   speedFromGeoLocation : any;
+   updateTS : any;
 
   constructor(
     private imagePicker: ImagePicker,
@@ -56,18 +72,209 @@ export class DetailsPage implements OnInit {
     private plt: Platform,
     private ref: ChangeDetectorRef,
     private filePath: FilePath,
-    private datePipe: DatePipe
-
+    private datePipe: DatePipe,
+    public geolocation: Geolocation,
+    public zone: NgZone,
+    public backgroundGeolocation: BackgroundGeolocation,
+    private androidPermissions: AndroidPermissions,
+    private locationAccuracy: LocationAccuracy,
+    private sms: SMS
   ) { }
 
   ngOnInit() {
     this.plt.ready().then(() => {
           //this.loadStoredImages();
+          this.checkGPSPermission();
         });
+
     if (this.route && this.route.data) {
       this.getData();
     }
   }
+
+  ngOnDestroy() {
+    console.log('ngOndestroy called');
+    this.stopTracking();
+  }
+
+  checkGPSPermission() {
+      this.androidPermissions.checkPermission(this.androidPermissions.PERMISSION.ACCESS_COARSE_LOCATION).then(
+        result => {
+          if (result.hasPermission) {
+
+            //If having permission show 'Turn On GPS' dialogue
+            this.askToTurnOnGPS();
+          } else {
+
+            //If not having permission ask for permission
+            this.requestGPSPermission();
+          }
+        },
+        err => {
+          alert(err);
+        }
+      );
+    }
+
+    requestGPSPermission() {
+      this.locationAccuracy.canRequest().then((canRequest: boolean) => {
+        if (canRequest) {
+          console.log("4");
+        } else {
+          //Show 'GPS Permission Request' dialogue
+          this.androidPermissions.requestPermission(this.androidPermissions.PERMISSION.ACCESS_COARSE_LOCATION)
+            .then(
+              () => {
+                // call method to turn on GPS
+                this.askToTurnOnGPS();
+              },
+              error => {
+                //Show alert if user click on 'No Thanks'
+                alert('requestPermission Error requesting location permissions ' + error);
+                this.router.navigate(["/home"]);
+
+              }
+            );
+        }
+      });
+    }
+
+    askToTurnOnGPS() {
+      this.locationAccuracy.request(this.locationAccuracy.REQUEST_PRIORITY_HIGH_ACCURACY).then(
+        () => {
+          this.startTracking();
+          // When GPS Turned ON call method to get Accurate location coordinates
+        },
+        error => {
+            alert('Error requesting location permissions ' + JSON.stringify(error));
+          this.router.navigate(["/home"]);
+        }
+      );
+    }
+
+
+  startTracking() {
+
+    /*let config:BackgroundGeolocationConfig  = {
+      desiredAccuracy: 0,
+      stationaryRadius: 20,
+      distanceFilter: 10,
+      debug: true,
+      interval: 1000,
+      stopOnTerminate: false
+    };
+
+    this.backgroundGeolocation.configure(config).then((location:BackgroundGeolocationResponse) => {
+
+      //console.log('BackgroundGeolocation:  ' + location.latitude + ',' + location.longitude);
+//      console.log(this.lat ,      this.lng,      this.speed);
+
+      this.zone.run(() => {
+        this.lat = location.latitude;
+        this.lng = location.longitude;
+        this.speed = location.speed ? ((location.speed * 3600)/1000) : 0 ; // can be speed * 3.6 and should be round for 2 decimal
+
+      });
+      this.backgroundGeolocation
+              .on(BackgroundGeolocationEvents.location)
+              .subscribe((location: BackgroundGeolocationResponse) => {
+                console.log(location);
+                this.speedFromGeoLocation = location.speed;
+
+                // IMPORTANT:  You must execute the finish method here to inform the native plugin that you're finished,
+                // and the background-task may be completed.  You must do this regardless if your operations are successful or not.
+                // IF YOU DON'T, ios will CRASH YOUR APP for spending too much time in the background.
+              });
+
+    }, (err) => {
+      console.log(err);
+
+    });
+
+    this.backgroundGeolocation.start();*/
+
+    let options = {
+      frequency: 1000,
+      enableHighAccuracy: true,
+      timeout:3000,
+      maximumAge: 3000
+    };
+
+    this.watch = this.geolocation.watchPosition(options)
+    //.filter((p) => p.coords !== undefined)
+    .subscribe((position) => {
+
+      console.log(position);
+
+      this.zone.run(() => {
+        this.lat = position.coords.latitude;
+        this.lng = position.coords.longitude;
+        this.speed = position.coords.speed ? ((position.coords.speed * 3600)/1000) : 0 ;
+        this.updateTS = position.timestamp;
+        if (this.speed && this.item) {
+          if (this.speed > this.item.maxSpeed) {
+            this.item.endAt = Date.now();
+            this.firebaseService.updateEvent(this.item.id, this.item)
+              .then(
+                res => {
+                  this.sendSMS();
+                  //this.presentToast("You have been disqualified since you crossed the speed limit of "+this.item.maxSpeed+ " . Please contact organizing Team");
+                  this.speedFinish();
+
+                },
+                err => console.log(err)
+              )
+          }
+        }
+      });
+
+    });
+  }
+
+  sendSMS() {
+    var options = {
+      replaceLineBreaks: false, // true to replace \n by a new line, false by default
+      android: {
+        intent: 'INTENT' // send SMS with the native android SMS messaging
+        //intent: '' // send SMS without opening any other app
+      }
+    };
+    let msg = this.peopleDetails[0].payload.doc.data().name + ' have elapsed max speed limit and hence are disqualified'
+    this.item.contactDetails.forEach( contact => {
+        this.sms.send(contact, msg, options)
+          .then(()=>{
+            console.log('SMS sent to ' + contact);
+          },()=>{
+            console.log('unable to send SMS ');
+          });
+      }
+    );
+
+  }
+
+  stopTracking() {
+    console.log('stopTracking');
+    //this.backgroundGeolocation.finish();
+    this.watch.unsubscribe();
+
+  }
+
+  async speedFinish() {
+      const alert = await this.alertCtrl.create({
+        header: 'Disqualified !!!!! ',
+        message: 'Since You elapsed the max speed of '+this.item.maxSpeed +'. Please contact Organizing Team ',
+        buttons: [
+          {
+            text: 'Ok',
+            role: 'cancel',
+            cssClass: 'secondary',
+            handler: () => {}
+          }
+        ]
+      });
+      await alert.present();
+    }
+
 
   async getData(){
     this.route.data.subscribe(routeData => {
@@ -86,13 +293,6 @@ export class DetailsPage implements OnInit {
       })
     })
   }
-
-  /*async presentLoading(msg) {
-    const loading = await this.loadingController.create({
-      message: msg
-    });
-    return await loading.present();
-  }*/
 
   getBase64Image(img) {
     var canvas = document.createElement("canvas");
