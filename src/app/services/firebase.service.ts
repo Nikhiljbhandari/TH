@@ -127,7 +127,9 @@ export class FirebaseService {
           eventStartTime: event.eventStartTime,
           eventEndTime: event.eventEndTime,
           themeId: event.themeId,
-          clues: event.clues
+          clues: event.clues,
+          contactDetails: event.contactDetails,
+          maxSpeed: event.maxSpeed
           //theme: firebase.auth().currentUser.theme
         })
         .then(

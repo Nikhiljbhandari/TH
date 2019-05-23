@@ -20,9 +20,8 @@
   <div class="printable-area" id ="printable-area">
     <b>{{item ? item.eventName : ''}} &nbsp; Started at {{item ? (item.startedAt | date:'medium') : '' }} </b>
     <br/>
-    <b> Your Speed : {{speed}} last Updated at {{ updateTS | date:'medium'}} <br/>
-         latitude : {{lat}}<br/>
-        longitude : {{lng}}</b>
+    <b> Your Speed : {{speed}} last Updated at {{ updateTS | date:'medium'}} <br/></b>
+
     <ion-slides [options]="sliderConfig">
       <ion-slide *ngFor="let clue of item.clues; let i=index">
         <ion-card  color="light" >
