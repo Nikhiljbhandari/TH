@@ -53,6 +53,9 @@ export class DetailsPage implements OnInit, OnDestroy {
     x:any;
    speedFromGeoLocation : any;
    updateTS : any;
+   startSms: any;
+   finishSms: any;
+   disqualifiedSms: any;
 
   constructor(
     private imagePicker: ImagePicker,
@@ -84,8 +87,26 @@ export class DetailsPage implements OnInit, OnDestroy {
   ngOnInit() {
     this.plt.ready().then(() => {
           //this.loadStoredImages();
-          this.checkGPSPermission();
-        });
+      this.checkGPSPermission();
+
+      this.androidPermissions.checkPermission(this.androidPermissions.PERMISSION.SEND_SMS).then(
+        result => {
+          if (!result.hasPermission) {
+            this.androidPermissions.requestPermission(this.androidPermissions.PERMISSION.SEND_SMS );
+          }
+        },
+        err => this.androidPermissions.requestPermission(this.androidPermissions.PERMISSION.SEND_SMS )
+        );
+
+      this.androidPermissions.checkPermission(this.androidPermissions.PERMISSION.READ_PHONE_STATE).then(
+        result => {
+          if (!result.hasPermission) {
+            this.androidPermissions.requestPermission(this.androidPermissions.PERMISSION.READ_PHONE_STATE );
+          }
+        },
+        err => this.androidPermissions.requestPermission(this.androidPermissions.PERMISSION.READ_PHONE_STATE )
+        );
+    });
 
     if (this.route && this.route.data) {
       this.getData();
@@ -217,7 +238,7 @@ export class DetailsPage implements OnInit, OnDestroy {
             this.firebaseService.updateEvent(this.item.id, this.item)
               .then(
                 res => {
-                  this.sendSMS();
+                  this.sendSMS(true);
                   //this.presentToast("You have been disqualified since you crossed the speed limit of "+this.item.maxSpeed+ " . Please contact organizing Team");
                   this.speedFinish();
 
@@ -231,24 +252,29 @@ export class DetailsPage implements OnInit, OnDestroy {
     });
   }
 
-  sendSMS() {
+  sendSMS(disqualified) {
+
     var options = {
       replaceLineBreaks: false, // true to replace \n by a new line, false by default
       android: {
-        intent: 'INTENT' // send SMS with the native android SMS messaging
-        //intent: '' // send SMS without opening any other app
+        //intent: 'INTENT' // send SMS with the native android SMS messaging
+        intent: '' // send SMS without opening any other app
       }
     };
-    let msg = this.peopleDetails[0].payload.doc.data().name + ' have elapsed max speed limit and hence are disqualified'
-    this.item.contactDetails.forEach( contact => {
-        this.sms.send(contact, msg, options)
-          .then(()=>{
-            console.log('SMS sent to ' + contact);
-          },()=>{
-            console.log('unable to send SMS ');
-          });
-      }
-    );
+    let msg = this.disqualifiedSms;
+    if (!disqualified)  {
+      msg = this.finishSms;
+    }
+    this.sms.hasPermission().then( result => {
+      this.item.contactDetails.forEach( contact => {
+          this.sms.send(contact, msg, options)
+            .then(()=>{
+              console.log('SMS sent to ' + contact);
+            },()=>{
+              console.log('unable to send SMS ');
+            });
+      });
+    }, err => console.log(err));
 
   }
 
@@ -284,7 +310,9 @@ export class DetailsPage implements OnInit, OnDestroy {
         this.firebaseService.getPeopleDetails()
           .then(data1 => {
             data1.subscribe(data2 => {
-          this.peopleDetails = data2;
+              this.peopleDetails = data2;
+              this.disqualifiedSms = this.peopleDetails[0].payload.doc.data().name + ' have elapsed max speed limit and hence are disqualified';
+              this.finishSms = this.peopleDetails[0].payload.doc.data().name + ' have completed the event '+this.item.eventName;
           })
             },
            err => {
@@ -413,6 +441,7 @@ export class DetailsPage implements OnInit, OnDestroy {
             this.firebaseService.updateEvent(this.item.id, this.item)
             .then(
               res => {
+                this.sendSMS(false);
                 //this.router.navigate(["/home"]);
               },
               err => console.log(err)
