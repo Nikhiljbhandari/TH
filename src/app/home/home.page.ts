@@ -91,7 +91,8 @@ export class HomePage implements OnInit {
           themeId: item.themeId,
           clues: item.clues,
           maxSpeed: item.payload.doc.data().maxSpeed,
-          contactDetails: item.payload.doc.data().contactDetails
+          contactDetails: item.payload.doc.data().contactDetails,
+          sendSMS: item.payload.doc.data().sendSMS
         }
     //const loading = await this.loadingCtrl.create({
       //  message: 'Please wait...'

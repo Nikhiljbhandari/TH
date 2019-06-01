@@ -34,8 +34,7 @@ import { LocationAccuracy } from '@ionic-native/location-accuracy/ngx';
 import { SMS } from '@ionic-native/sms/ngx';
 //import { TNCModalModule } from 'tnc/tnc-modal.module';
 import { ExampleModalPageModule } from './example-modal/example-modal.module';
-
-
+import { NativeAudio } from '@ionic-native/native-audio/ngx';
 
 @NgModule({
   declarations: [AppComponent],
@@ -69,6 +68,7 @@ import { ExampleModalPageModule } from './example-modal/example-modal.module';
     LocationAccuracy,
     Geolocation,
     SMS,
+    NativeAudio,
     { provide: FirestoreSettingsToken, useValue: {} },
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy }
   ],

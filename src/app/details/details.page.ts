@@ -24,6 +24,7 @@ import { Geolocation, Geoposition } from '@ionic-native/geolocation/ngx';
 import { AndroidPermissions } from '@ionic-native/android-permissions/ngx';
 import { LocationAccuracy } from '@ionic-native/location-accuracy/ngx';
 import { SMS } from '@ionic-native/sms/ngx';
+import { NativeAudio } from '@ionic-native/native-audio/ngx';
 
 const STORAGE_KEY = 'my_images';
 
@@ -81,7 +82,8 @@ export class DetailsPage implements OnInit, OnDestroy {
     public backgroundGeolocation: BackgroundGeolocation,
     private androidPermissions: AndroidPermissions,
     private locationAccuracy: LocationAccuracy,
-    private sms: SMS
+    private sms: SMS,
+    private nativeAudio: nativeAudio
   ) { }
 
   ngOnInit() {
@@ -115,6 +117,7 @@ export class DetailsPage implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     console.log('ngOndestroy called');
+this.nativeAudio.unload('uniqueId1').then(() => console.log('uniqueId1 is unoaded'));
     this.stopTracking();
   }
 
@@ -233,7 +236,7 @@ export class DetailsPage implements OnInit, OnDestroy {
         this.speed = position.coords.speed ? ((position.coords.speed * 3600)/1000) : 0 ;
         this.updateTS = position.timestamp;
         if (this.speed && this.item) {
-          if (this.speed > this.item.maxSpeed) {
+          if (!this.item.endAt && this.speed > this.item.maxSpeed) {
             this.item.endAt = Date.now();
             this.firebaseService.updateEvent(this.item.id, this.item)
               .then(
@@ -254,27 +257,31 @@ export class DetailsPage implements OnInit, OnDestroy {
 
   sendSMS(disqualified) {
 
-    var options = {
-      replaceLineBreaks: false, // true to replace \n by a new line, false by default
-      android: {
-        //intent: 'INTENT' // send SMS with the native android SMS messaging
-        intent: '' // send SMS without opening any other app
+    if (this.item.sendSMS) {
+
+      var options = {
+        replaceLineBreaks: false, // true to replace \n by a new line, false by default
+        android: {
+          //intent: 'INTENT' // send SMS with the native android SMS messaging
+          intent: '' // send SMS without opening any other app
+        }
+      };
+      let msg = this.disqualifiedSms;
+      if (!disqualified)  {
+        msg = this.finishSms;
       }
-    };
-    let msg = this.disqualifiedSms;
-    if (!disqualified)  {
-      msg = this.finishSms;
+      this.sms.hasPermission().then( result => {
+        this.item.contactDetails.forEach( contact => {
+            this.sms.send(contact, msg, options)
+              .then(()=>{
+                console.log('SMS sent to ' + contact);
+              },()=>{
+                console.log('unable to send SMS ');
+              });
+        });
+      }, err => console.log(err));
+
     }
-    this.sms.hasPermission().then( result => {
-      this.item.contactDetails.forEach( contact => {
-          this.sms.send(contact, msg, options)
-            .then(()=>{
-              console.log('SMS sent to ' + contact);
-            },()=>{
-              console.log('unable to send SMS ');
-            });
-      });
-    }, err => console.log(err));
 
   }
 
@@ -286,6 +293,8 @@ export class DetailsPage implements OnInit, OnDestroy {
   }
 
   async speedFinish() {
+  this.nativeAudio.loop('uniqueId1', () => console.log('uniqueId1 is started playing'));
+
       const alert = await this.alertCtrl.create({
         header: 'Disqualified !!!!! ',
         message: 'Since You elapsed the max speed of '+this.item.maxSpeed +'. Please contact Organizing Team ',
@@ -294,7 +303,8 @@ export class DetailsPage implements OnInit, OnDestroy {
             text: 'Ok',
             role: 'cancel',
             cssClass: 'secondary',
-            handler: () => {}
+            handler: () => {this.nativeAudio.stop('uniqueId1', () => console.log('uniqueId1 is done playing'));
+}
           }
         ]
       });
@@ -306,12 +316,13 @@ export class DetailsPage implements OnInit, OnDestroy {
     this.route.data.subscribe(routeData => {
       routeData['data'].subscribe(data => {
         this.item = data[0].payload.doc.data();
+        this.nativeAudio.preloadSimple('uniqueId1','assets/audio/Warning.mp3');
         this.item.id = data[0].payload.doc.id;
         this.firebaseService.getPeopleDetails()
           .then(data1 => {
             data1.subscribe(data2 => {
               this.peopleDetails = data2;
-              this.disqualifiedSms = this.peopleDetails[0].payload.doc.data().name + ' have elapsed max speed limit and hence are disqualified';
+              this.disqualifiedSms = this.peopleDetails[0].payload.doc.data().name + ' have elapsed max speed limit of '+ this.item.maxSpeed +' and hence are disqualified';
               this.finishSms = this.peopleDetails[0].payload.doc.data().name + ' have completed the event '+this.item.eventName;
           })
             },

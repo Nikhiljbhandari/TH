@@ -11,7 +11,7 @@ export class DetailsResolver implements Resolve<any> {
 
 
     return new Promise((resolve, reject) => {
-       this.firebaseService.getPeopleEvent().then(data => {
+       this.firebaseService.getPeopleDetails().then(data => {
          resolve(data);
       }, err => {
         reject(err);

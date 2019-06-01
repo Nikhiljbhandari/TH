@@ -129,7 +129,8 @@ export class FirebaseService {
           themeId: event.themeId,
           clues: event.clues,
           contactDetails: event.contactDetails,
-          maxSpeed: event.maxSpeed
+          maxSpeed: event.maxSpeed,
+          sendSMS: event.sendSMS
           //theme: firebase.auth().currentUser.theme
         })
         .then(

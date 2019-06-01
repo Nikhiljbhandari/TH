@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,OnDestroy } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { LoadingController } from '@ionic/angular';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -9,7 +9,7 @@ import { FirebaseService } from '../services/firebase.service';
   templateUrl: './welcome.page.html',
   styleUrls: ['./welcome.page.scss'],
 })
-export class WelcomePage implements OnInit {
+export class WelcomePage implements OnInit,OnDestroy {
 
   items: Array<any>;
   peopleEvent : Array<any>;
@@ -60,6 +60,9 @@ export class WelcomePage implements OnInit {
     }, err => {
       console.log(err);
     })
+  }
+
+  ngOnDestroy() {
   }
 
 }
